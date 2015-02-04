@@ -8,7 +8,7 @@ HutfAPI/connectionStrings.DEV5.config
 HutfAPI/connectionStrings.debug.config
 
 # ignore logs
-App_Data/logs/*
+App_Data/logs/
 
 # User-specific files
 *.suo

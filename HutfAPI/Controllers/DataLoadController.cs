@@ -8,9 +8,6 @@ using System.Web.Http;
 
 namespace HutfAPI.Controllers
 {
-    // api auth filter
-    // https://github.com/cuongle/WebAPI.Hmac/tree/master/WebAPI.Hmac/Filters
-
     public class DataLoadController : BaseApiController
     {
         protected IDataLoadRepository _repo;

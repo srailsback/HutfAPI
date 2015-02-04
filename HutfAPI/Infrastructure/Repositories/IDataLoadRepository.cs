@@ -5,6 +5,7 @@ using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Linq.Expressions;
 using Massive.Oracle;
 using System.Data.Common;
 using System.Dynamic;
@@ -209,7 +210,7 @@ namespace HutfAPI.Infrastructure.Repositories
         #region helpers
 
         /// <summary>
-        /// Gets an application setting.
+        /// Gets an application settings.
         /// </summary>
         /// <param name="key">The key.</param>
         /// <returns></returns>
@@ -234,12 +235,14 @@ namespace HutfAPI.Infrastructure.Repositories
         /// <returns></returns>
         private string GetConnectionName(bool isOracle = false)
         {
-            // cheap - as long as we don't rearrange order of connection strings in config we're okay
+            // get all connection strings
+            var connectionStrings = ConfigurationManager.ConnectionStrings.Cast<ConnectionStringSettings>().ToList();
+
             if (isOracle)
             {
-                return ConfigurationManager.ConnectionStrings[3].Name;
+                return connectionStrings.Single(x => x.Name.ToLower().Contains("orcl")).Name;
             }
-            return ConfigurationManager.ConnectionStrings[2].Name;
+            return connectionStrings.Single(x => x.Name.ToLower().Contains("sql") && !x.Name.ToLower().Contains("local")).Name;
         }
 
         #endregion

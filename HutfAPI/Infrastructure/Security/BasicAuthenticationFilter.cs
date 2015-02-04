@@ -108,6 +108,7 @@ namespace HutfAPI.Infrastructure.Security
             else
             {
 
+                // here's the auth foo - app has one user. check auth that it matches the one in our settings
                 var hutfApiUser = ConfigurationManager.AppSettings["hutfapi.User"];
                 var hutfApiPass = ConfigurationManager.AppSettings["hutfapi.Secret"];
 
