@@ -1,0 +1,20 @@
+2015-02-02 12:26:00.3324 | INFO | Loading data from Oracle to SQL for FIPS =>  | 
+2015-02-02 12:26:00.3324 | INFO | Performing bulk copy from Oracle to SQL for FIPS =>  | 
+2015-02-02 12:26:00.3324 | INFO | Validating and updating TABLE => CICOOFF_TEST | 
+2015-02-02 12:26:00.9414 | ERROR | Could not validate and update TABLE => CICOOFF_TEST | 
+2015-02-02 12:26:00.9414 | INFO | TRUNCATING table GRDMS_CICOOFF_TEST | 
+2015-02-02 12:26:00.9414 | INFO | TRUNCATING table GRDMS_CICOHOVT_TEST | 
+2015-02-02 12:26:00.9414 | INFO | TRUNCATING table GRDMS_CICOHPMS_TEST | 
+2015-02-02 12:26:00.9414 | INFO | Creating DATATABLE from ORACLE TABLE => CICOOFF_TEST for FIPS =>  | 
+2015-02-02 12:26:00.9414 | INFO | Getting CICOOFF for FIPS =>  | 
+2015-02-02 12:26:21.5594 | INFO | Mapping columns | 
+2015-02-02 12:26:21.5594 | INFO | Writing to server | 
+2015-02-02 12:26:28.4684 | INFO | Creating DATATABLE from ORACLE TABLE => CICOHOVT_TEST for FIPS =>  | 
+2015-02-02 12:26:28.4684 | INFO | Getting CICOHOVT for FIPS =>  | 
+2015-02-02 12:26:28.4884 | INFO | Mapping columns | 
+2015-02-02 12:26:28.4884 | INFO | Writing to server | 
+2015-02-02 12:26:28.4884 | INFO | Creating DATATABLE from ORACLE TABLE => CICOHPMS_TEST for FIPS =>  | 
+2015-02-02 12:26:28.4884 | INFO | Getting CICOHPMS for FIPS =>  | 
+2015-02-02 12:26:28.8384 | INFO | Mapping columns | 
+2015-02-02 12:26:28.8384 | INFO | Writing to server | 
+2015-02-02 12:26:28.8854 | INFO | Bulk copy from Oracle to SQL success | 
