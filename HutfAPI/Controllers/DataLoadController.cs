@@ -120,11 +120,10 @@ namespace HutfAPI.Controllers
         [BasicAuthenticationFilter]
         public HttpResponseMessage Commit(string q)
         {
-            var fips = q == "99999" ? "" : q;
             try
             {
 
-                var success = _repo.BulkCopyFromSqlToOracle(fips);
+                var success = _repo.BulkCopyFromSqlToOracle(q);
 
                 if (success)
                 {

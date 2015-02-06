@@ -1175,11 +1175,14 @@ namespace HutfAPI.Infrastructure.Repositories
         /// </remarks>
         public bool BulkCopyFromSqlToOracle(string fips)
         {
-
             _logger.Info(string.Format("Performing copy from SQL to SQL for FIPS => {0}", fips));
 
             // get cicooffs and cicohovts from live data
             var cicooffsFoFips = sqlGetAllLiveCICOOFF(fips);
+            if (cicooffsFoFips == null || cicooffsFoFips.Count() == 0)
+            {
+                throw new ArgumentException("FIPS not found.");
+            }
 
             // hey - cool news from CDOT, according to them we don't have to maintain the hovt record. 
             // comment out for now should they change their minds
@@ -1272,12 +1275,12 @@ namespace HutfAPI.Infrastructure.Repositories
 
         internal class ORCL_CICOOFF_TABLE : DynamicModel
         {
-            public ORCL_CICOOFF_TABLE() : base("OracleConnectionString", "CICOOFF_TEST", primaryKeyField: "GUID") { }
+            public ORCL_CICOOFF_TABLE() : base("ORCLConnectionString", "CICOOFF_TEST", primaryKeyField: "GUID") { }
         }
 
         internal class ORCL_CICOHOVT_TABLE : DynamicModel
         {
-            public ORCL_CICOHOVT_TABLE() : base("OracleConnectionString", "CICOHOVT_TEST") { }
+            public ORCL_CICOHOVT_TABLE() : base("ORCLConnectionString", "CICOHOVT_TEST") { }
         }
     }
 
