@@ -122,8 +122,16 @@ namespace HutfAPI.Controllers
         {
             try
             {
+                var success = false;
+                if (q.Length <= 5)
+                {
+                    success = _repo.BulkCopyFromSqlToOracle(q);
+                }
+                else
+                {
+                    success = _repo.CopyFromSqlToOracle(q);
+                }
 
-                var success = _repo.BulkCopyFromSqlToOracle(q);
 
                 if (success)
                 {

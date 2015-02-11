@@ -9,6 +9,8 @@ using System.Linq.Expressions;
 using Massive.Oracle;
 using System.Data.Common;
 using System.Dynamic;
+using HutfAPI.Infrastructure.Helpers;
+
 namespace HutfAPI.Infrastructure.Repositories
 {
     public interface IDataLoadRepository
@@ -134,6 +136,7 @@ namespace HutfAPI.Infrastructure.Repositories
 
         #region Load Oracle into SQL
 
+        bool CopyFromSqlToOracle(string segmentKey);
 
         /// <summary>
         /// Copy data from Oracle to SQL for a FIPS, all if no FIPS is provided. Do this inside a transaction we we can roll it back on an error.
@@ -194,39 +197,21 @@ namespace HutfAPI.Infrastructure.Repositories
             this.SQL_CONNECTION_STRING_NAME = GetConnectionName();
 
             // orcl tables
-            this.ORCL_CICOOFF = GetAppSetting("ORCL_CICOOFF_TABLE");
-            this.ORCL_CICOHPMS = GetAppSetting("ORCL_CICOHPMS_TABLE");
-            this.ORCL_CICOHOVT = GetAppSetting("ORCL_CICOHOVT_TABLE");
+            this.ORCL_CICOOFF = ConfigHelper.GetAppSetting("ORCL_CICOOFF_TABLE");
+            this.ORCL_CICOHPMS = ConfigHelper.GetAppSetting("ORCL_CICOHPMS_TABLE");
+            this.ORCL_CICOHOVT = ConfigHelper.GetAppSetting("ORCL_CICOHOVT_TABLE");
 
             // sql tables
-            this.SQL_CICOOFF = GetAppSetting("SQL_CICOOFF_TABLE");
-            this.SQL_CICOHPMS = GetAppSetting("SQL_CICOHPMS_TABLE");
-            this.SQL_CICOHOVT = GetAppSetting("SQL_CICOHOVT_TABLE");
-            this.SQL_LIVE_CICOOFF = GetAppSetting("SQL_LIVE_CICOOFF_TABLE");
-            this.SQL_LIVE_CICOHOVT = GetAppSetting("SQL_LIVE_CICOHOVT_TABLE");
+            this.SQL_CICOOFF = ConfigHelper.GetAppSetting("SQL_CICOOFF_TABLE");
+            this.SQL_CICOHPMS = ConfigHelper.GetAppSetting("SQL_CICOHPMS_TABLE");
+            this.SQL_CICOHOVT = ConfigHelper.GetAppSetting("SQL_CICOHOVT_TABLE");
+            this.SQL_LIVE_CICOOFF = ConfigHelper.GetAppSetting("SQL_LIVE_CICOOFF_TABLE");
+            this.SQL_LIVE_CICOHOVT = ConfigHelper.GetAppSetting("SQL_LIVE_CICOHOVT_TABLE");
 
         }
 
         #region helpers
 
-        /// <summary>
-        /// Gets an application settings.
-        /// </summary>
-        /// <param name="key">The key.</param>
-        /// <returns></returns>
-        private string GetAppSetting(string key)
-        {
-            string value = "";
-            try
-            {
-                value = ConfigurationManager.AppSettings[key];
-            }
-            catch (InvalidOperationException ex)
-            {
-                _logger.Fatal(string.Format("{0} app setting key not found."));
-            }
-            return value;
-        }
 
         /// <summary>
         /// Gets name of the connection string.
@@ -511,13 +496,24 @@ namespace HutfAPI.Infrastructure.Repositories
         }
 
 
-        private DbCommand orclDeleteCICOOFF(string fips)
+        private DbCommand orclDeleteCICOOFF(string fipsOrGuid)
         {
-            _logger.Info(string.Format("Deleting records from TABLE => {0} for FIPS => ", ORCL_CICOOFF, fips));
             var table = new ORCL_CICOOFF_TABLE();
             var args = new List<object>();
-            args.Add(fips);
-            return table.CreateDeleteCommand(where: "FIPS = :0", args: args.ToArray());
+            if (fipsOrGuid.Length <= 5)
+            {
+                _logger.Info(string.Format("Deleting records from TABLE => {0} for FIPS => ", ORCL_CICOOFF, fipsOrGuid));
+                args.Add(fipsOrGuid);
+                return table.CreateDeleteCommand(where: "FIPS = :0", args: args.ToArray());
+            }
+            else
+            {
+                fipsOrGuid = fipsOrGuid.Replace(@"-", "").ToUpper();
+
+                _logger.Info(string.Format("Deleting record from TABLE => {0} for GUID => ", ORCL_CICOOFF, fipsOrGuid));
+                args.Add(fipsOrGuid);
+                return table.CreateDeleteCommand(where: "GUID = :0", args: args.ToArray());
+            }
         }
 
         private DbCommand orclInsertCICOOFF(dynamic cicooffToInsert)
@@ -1159,6 +1155,65 @@ namespace HutfAPI.Infrastructure.Repositories
 
         #region Load SQL into Oracle
 
+        public bool CopyFromSqlToOracle(string segmentKey)
+        {
+            var cicooff = sqlGetLiveCICOOFF(segmentKey);
+            if (cicooff != null)
+            {
+                _logger.Info(string.Format("Performing copy from SQL to Oracle for GUID => {0}", segmentKey));
+
+                // spin up massive and do this under transactions.
+                // first we will delete the segment key
+                // the we will insert a new one from sql
+                // spin up a dynamic model, open an oracle connection and create a transaction instance
+                var db = new ExtendedDynamicModel(ORCL_CONNECTION_STRING_NAME);
+                using (var orclConnection = db.Connection = db.OpenConnection())
+                {
+                    using (var orclTransaction = db.Transaction = orclConnection.BeginTransaction())
+                    {
+                        try
+                        {
+                            // doing this all under transactions, create a todo list
+                            // add every update, insert, and delete into the toDo queue
+                            // so all our queries are under a transaction and can be rolled back should things get sideways
+                            var toDo = new List<DbCommand>();
+
+                            // delete cicooffs from oracle
+                            toDo.Add(orclDeleteCICOOFF(segmentKey));
+
+                            _logger.Info(string.Format("Inserting record into TABLE => {0} for SegmentKey => {1}", ORCL_CICOOFF, segmentKey));
+                            toDo.Add(orclInsertCICOOFF(cicooff));
+
+
+                            var table = new ORCL_CICOOFF_TABLE();
+                            var result = table.Execute(toDo);
+                            if (result > 0)
+                            {
+                                orclTransaction.Commit();
+                                _logger.Info(string.Format("Successfully inserted record into TABLE => {0} for SegmentKey => {1}", ORCL_CICOOFF, segmentKey));
+                                return true;
+                            }
+                            else
+                            {
+                                orclTransaction.Rollback();
+                                _logger.Error(string.Format("Could not insert record into TABLE => {0} for SegmentKey => {1}", ORCL_CICOOFF, segmentKey));
+                                return false;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            orclTransaction.Rollback();
+                            _logger.ErrorException(string.Format("Could not insert record into TABLE => {0} for SegmentKey => {1}", ORCL_CICOOFF, segmentKey), ex);
+                            return false;
+                        }
+                    }
+                }
+            }
+            _logger.Error(string.Format("Could not copy segment from SQL to Oracle for Segment Key => {0}, does not exist", segmentKey));
+            return false;
+        }
+
+
         /// <summary>
         /// Copy data from Sql to Oracle for a FIPS, all if no FIPS is provided. Do this inside a transaction we we can roll it back on an error.
         /// </summary>
@@ -1275,12 +1330,12 @@ namespace HutfAPI.Infrastructure.Repositories
 
         internal class ORCL_CICOOFF_TABLE : DynamicModel
         {
-            public ORCL_CICOOFF_TABLE() : base("ORCLConnectionString", "CICOOFF_TEST", primaryKeyField: "GUID") { }
+            public ORCL_CICOOFF_TABLE() : base("ORCLConnectionString",  ConfigHelper.GetAppSetting("ORCL_CICOOFF_TABLE"), primaryKeyField: "GUID") { }
         }
 
         internal class ORCL_CICOHOVT_TABLE : DynamicModel
         {
-            public ORCL_CICOHOVT_TABLE() : base("ORCLConnectionString", "CICOHOVT_TEST") { }
+            public ORCL_CICOHOVT_TABLE() : base("ORCLConnectionString", ConfigHelper.GetAppSetting("ORCL_CICOHIOVT_TABLE")) { }
         }
     }
 
