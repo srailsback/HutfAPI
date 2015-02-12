@@ -612,7 +612,7 @@ namespace HutfAPI.Infrastructure.Repositories
             return table.CreateCommand(sql, null, args: args.ToArray());
         }
 
-        private void orclValidateCICOOFF()
+        private bool orclValidateCICOOFF()
         {
             // data from Oralce is inconsistent.
             // need to have guid and gisid property formatted.
@@ -648,17 +648,20 @@ namespace HutfAPI.Infrastructure.Repositories
                         {
                             orclTransaction.Commit();
                             _logger.Info(string.Format("TABLE => {0} was validated and updated", ORCL_CICOOFF));
+                            return true;
                         }
                         else
                         {
                             _logger.Error(string.Format("Could not validate and update TABLE => {0}", ORCL_CICOOFF));
                             orclTransaction.Rollback();
+                            return false;
                         }
                     }
                     catch (Exception ex)
                     {
                         _logger.ErrorException(string.Format("Could not validate and update TABLE => {0}", ORCL_CICOOFF), ex);
                         orclTransaction.Rollback();
+                        return false;
                     }
                 }
 
@@ -681,8 +684,15 @@ namespace HutfAPI.Infrastructure.Repositories
             _logger.Info(string.Format("Performing bulk copy from Oracle to SQL for FIPS => {0}", fips));
 
             // validate and update cicooff, because their data is inconsistent and webhutf expects it right
-            orclValidateCICOOFF();
+           
+            // if not fixed, stop here!!!!
+            var isValidCICOOFF = orclValidateCICOOFF();
 
+            if (!isValidCICOOFF)
+            {
+                _logger.Info("Bulk copy from Oracle to SQL process stopped. This could be due to null or improperly formatted GUID and GISID");
+                return false;
+            }
 
             // using sql connection
             using (var sqlConnection = new SqlConnection(ConfigurationManager.ConnectionStrings[SQL_CONNECTION_STRING_NAME].ConnectionString))
