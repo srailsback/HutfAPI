@@ -643,19 +643,9 @@ namespace HutfAPI.Infrastructure.Repositories
                         toDo.Add(table.CreateCommand(sql3, null));
 
                         var result = table.Execute(toDo);
-                        //var result = db.Execute(toDo);
-                        if (result > 0)
-                        {
-                            orclTransaction.Commit();
-                            _logger.Info(string.Format("TABLE => {0} was validated and updated", ORCL_CICOOFF));
-                            return true;
-                        }
-                        else
-                        {
-                            _logger.Error(string.Format("Could not validate and update TABLE => {0}", ORCL_CICOOFF));
-                            orclTransaction.Rollback();
-                            return false;
-                        }
+                        orclTransaction.Commit();
+                        _logger.Info(string.Format("TABLE => {0} was validated and updated", ORCL_CICOOFF));
+                        return true;
                     }
                     catch (Exception ex)
                     {
