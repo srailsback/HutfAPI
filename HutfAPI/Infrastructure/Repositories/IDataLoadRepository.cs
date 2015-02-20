@@ -920,7 +920,7 @@ namespace HutfAPI.Infrastructure.Repositories
                     row["PROJYR"] = item.PROJYR;
                     row["BUILTYR"] = item.BUILTYR;
                     row["INSPYR"] = item.INSPYR;
-                    row["PRITREATMENTDEPTH"] = item.PRITREATMENTDEPTH != null ? item.PRITREATMENTDEPTH : DBNull.Value;
+                    row["PRITREATMENTDEPTH"] = item.PRITREATMENTDEPTH != null ? item.PRITREATMENTDEPTH : 0;
                     row["PRISURF"] = item.PRISURF;
                     row["PRISURFWD"] = item.PRISURFWD;
                     row["THRULNQTY"] = item.THRULNQTY;
@@ -933,12 +933,12 @@ namespace HutfAPI.Infrastructure.Repositories
                     row["TERRAIN"] = item.TERRAIN;
                     row["FORESTROUTE"] = item.FORESTROUTE;
                     row["ROUTESIGN"] = item.ROUTESIGN;
-                    row["ROUTESIGN"] = item.ROUTESIGN;
+                    row["ROUTESIGNQUAL"] = item.ROUTESIGNQUAL;
                     row["JURSPLIT"] = item.JURSPLIT;
                     row["ROUTENAME"] = item.ROUTENAME;
                     if (!toOracle)
                     {
-                        row["ROUTESUFFIX"] = DBNull.Value;
+                        row["ROUTESUFFIX"] = "";
                     }
                     row["FROMFEATURE"] = item.FROMFEATURE;
                     row["TOFEATURE"] = item.TOFEATURE;
@@ -948,9 +948,9 @@ namespace HutfAPI.Infrastructure.Repositories
                     row["COUNTSTATIONID"] = item.COUNTSTATIONID;
                     row["PRIYRREHAB"] = item.PRIYRREHAB;
                     row["ISDIVIDED"] = item.ISDIVIDED;
-                    row["LRSROUTE"] = item.LRSROUTE != null ? item.LRSROUTE : DBNull.Value;
-                    row["FROMMEAS"] = item.FROMMEAS != null ? item.FROMMEAS : DBNull.Value;
-                    row["TOMEAS"] = item.TOMEAS != null ? item.TOMEAS : DBNull.Value;
+                    row["LRSROUTE"] = item.LRSROUTE != null ? item.LRSROUTE : "";
+                    row["FROMMEAS"] = item.FROMMEAS != null ? item.FROMMEAS : 0;
+                    row["TOMEAS"] = item.TOMEAS != null ? item.TOMEAS : 0;
                     if (!toOracle)
                     {
                         row["LastEditedAtUTC"] = DBNull.Value;
