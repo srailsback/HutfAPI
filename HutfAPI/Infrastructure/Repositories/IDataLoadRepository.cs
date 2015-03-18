@@ -802,6 +802,28 @@ namespace HutfAPI.Infrastructure.Repositories
             }
         }
 
+        private string GetStringFromDynamic(dynamic value) {
+            if (value == null)
+            {
+                return "";
+            }
+            else
+            {
+                string toReturn = value.ToString().Trim();
+                if (toReturn.ToLower().Contains("null"))
+                {
+                    return "";
+                }
+                return toReturn;
+            }
+        }
+
+        private bool DynamicPropertyExists(dynamic d, string propertyName)
+        {
+            return d.GetType().GetProperty(propertyName) != null;
+        }
+
+
         /// <summary>
         /// CICOOFF datatable.
         /// </summary>
@@ -903,52 +925,59 @@ namespace HutfAPI.Infrastructure.Repositories
                     row["SEGMID"] = item.SEGMID;
                     row["LENGTH_"] = item.LENGTH_;
                     row["UPDATEYR"] = item.UPDATEYR;
-                    row["FIPSCOUNTY"] = item.FIPSCOUNTY;
-                    row["FUNCCLASSID"] = item.FUNCCLASSID;
-                    row["GOVLEVEL"] = item.GOVLEVEL;
-                    row["ADMINCLASS"] = item.ADMINCLASS;
-                    row["POPULATION"] = item.POPULATION;
-                    row["URBAN"] = item.URBAN;
-                    row["NAAQSID"] = item.NAAQSID;
-                    row["NHSDESIG"] = item.NHSDESIG;
-                    row["SPECIALSYS"] = item.SPECIALSYS;
-                    row["ACCESS_"] = item.ACCESS_;
-                    row["TRKRESTRICT"] = item.TRKRESTRICT;
-                    row["PRIIRI"] = item.PRIIRI;
-                    row["PRIIRIDATE"] = item.PRIIRIDATE != null ? item.PRIIRIDATE : DBNull.Value;
-                    row["PRIPSI"] = item.PRIPSI;
-                    row["PROJYR"] = item.PROJYR;
-                    row["BUILTYR"] = item.BUILTYR;
-                    row["INSPYR"] = item.INSPYR;
+                    row["FIPSCOUNTY"] = GetStringFromDynamic(item.FIPSCOUNTY);
+                    row["FUNCCLASSID"] = GetStringFromDynamic(item.FUNCCLASSID);
+                    row["GOVLEVEL"] = GetStringFromDynamic(item.GOVLEVEL);
+                    row["ADMINCLASS"] = GetStringFromDynamic(item.ADMINCLASS);
+                    row["POPULATION"] = GetStringFromDynamic(item.POPULATION);
+                    row["URBAN"] = GetStringFromDynamic(item.URBAN);
+                    row["NAAQSID"] = GetStringFromDynamic(item.NAAQSID);
+                    row["NHSDESIG"] = GetStringFromDynamic(item.NHSDESIG);
+                    row["SPECIALSYS"] = GetStringFromDynamic(item.SPECIALSYS);
+                    row["ACCESS_"] = GetStringFromDynamic(item.ACCESS_);
+                    row["TRKRESTRICT"] = GetStringFromDynamic(item.TRKRESTRICT);
+                    row["PRIIRI"] = item.PRIIRI != null ? int.Parse(item.PRIIRI.ToString()) : 0;
+                    if (DynamicPropertyExists(item, "PRIIRIDATE")) {
+                        row["PRIIRIDATE"] = item.PRIIRIDATE != null ? DateTime.Parse(item.PRIIRIDATE.ToString()) : (DateTime?)null;
+                    }
+                    else
+                    {
+                        row["PRIIRIDATE"] = DBNull.Value;
+                    }
+
+                    row["PRIPSI"] = decimal.Parse(item.PRIPSI.ToString());
+                    row["PROJYR"] = GetStringFromDynamic(item.PROJYR);
+                    row["BUILTYR"] = GetStringFromDynamic(item.BUILTYR);
+                    row["INSPYR"] = GetStringFromDynamic(item.INSPYR);
                     row["PRITREATMENTDEPTH"] = item.PRITREATMENTDEPTH != null ? item.PRITREATMENTDEPTH : 0;
-                    row["PRISURF"] = item.PRISURF;
-                    row["PRISURFWD"] = item.PRISURFWD;
-                    row["THRULNQTY"] = item.THRULNQTY;
-                    row["PRITHRULNWD"] = item.PRITHRULNWD;
-                    row["OPERATION"] = item.OPERATION;
-                    row["RRXID"] = item.RRXID;
-                    row["STRID"] = item.STRID;
-                    row["REGION"] = item.REGION;
-                    row["TPRID"] = item.TPRID;
-                    row["TERRAIN"] = item.TERRAIN;
-                    row["FORESTROUTE"] = item.FORESTROUTE;
-                    row["ROUTESIGN"] = item.ROUTESIGN;
-                    row["ROUTESIGNQUAL"] = item.ROUTESIGNQUAL;
-                    row["JURSPLIT"] = item.JURSPLIT;
-                    row["ROUTENAME"] = item.ROUTENAME;
+                    row["PRISURF"] = GetStringFromDynamic(item.PRISURF);
+                    row["PRISURFWD"] = int.Parse(item.PRISURFWD.ToString());
+                    row["THRULNQTY"] = int.Parse(item.THRULNQTY.ToString());
+                    row["PRITHRULNWD"] = int.Parse(item.PRITHRULNWD.ToString());
+                    row["OPERATION"] = GetStringFromDynamic(item.OPERATION);
+                    row["RRXID"] = GetStringFromDynamic(item.RRXID);
+                    row["STRID"] = GetStringFromDynamic(item.STRID);
+                    row["REGION"] = GetStringFromDynamic(item.REGION);
+                    row["TPRID"] = GetStringFromDynamic(item.TPRID);
+                    row["TERRAIN"] = GetStringFromDynamic(item.TERRAIN);
+                    row["FORESTROUTE"] = GetStringFromDynamic(item.FORESTROUTE);
+                    row["ROUTESIGN"] = GetStringFromDynamic(item.ROUTESIGN);
+                    row["ROUTESIGNQUAL"] = GetStringFromDynamic(item.ROUTESIGNQUAL);
+                    row["JURSPLIT"] = GetStringFromDynamic(item.JURSPLIT);
+                    row["ROUTENAME"] = GetStringFromDynamic(item.ROUTENAME);
                     if (!toOracle)
                     {
                         row["ROUTESUFFIX"] = "";
                     }
-                    row["FROMFEATURE"] = item.FROMFEATURE;
-                    row["TOFEATURE"] = item.TOFEATURE;
-                    row["SEGMDIR"] = item.SEGMDIR;
-                    row["SEGMPREFIX"] = item.SEGMPREFIX;
-                    row["GISID"] = item.GISID;
-                    row["COUNTSTATIONID"] = item.COUNTSTATIONID;
-                    row["PRIYRREHAB"] = item.PRIYRREHAB;
-                    row["ISDIVIDED"] = item.ISDIVIDED;
-                    row["LRSROUTE"] = item.LRSROUTE != null ? item.LRSROUTE : "";
+                    row["FROMFEATURE"] = GetStringFromDynamic(item.FROMFEATURE).ToUpper();
+                    row["TOFEATURE"] = GetStringFromDynamic(item.TOFEATURE).ToUpper();
+                    row["SEGMDIR"] = GetStringFromDynamic(item.SEGMDIR);
+                    row["SEGMPREFIX"] = GetStringFromDynamic(item.SEGMPREFIX);
+                    row["GISID"] = GetStringFromDynamic(item.GISID);
+                    row["COUNTSTATIONID"] = GetStringFromDynamic(item.COUNTSTATIONID);
+                    row["PRIYRREHAB"] = GetStringFromDynamic(item.PRIYRREHAB);
+                    row["ISDIVIDED"] = GetStringFromDynamic(item.ISDIVIDED);
+                    row["LRSROUTE"] = GetStringFromDynamic(item.LRSROUTE);
                     row["FROMMEAS"] = item.FROMMEAS != null ? item.FROMMEAS : 0;
                     row["TOMEAS"] = item.TOMEAS != null ? item.TOMEAS : 0;
                     if (!toOracle)
@@ -966,6 +995,7 @@ namespace HutfAPI.Infrastructure.Repositories
             }
 
         }
+
 
         /// <summary>
         /// CICOHOVT datatable.
@@ -1000,9 +1030,9 @@ namespace HutfAPI.Infrastructure.Repositories
                     row["LENGTH_"] = item.LENGTH_;
                     row["UPDATEYR"] = item.UPDATEYR;
                     row["FIPSCOUNTY"] = item.FIPSCOUNTY;
-                    row["HOVTYPE"] = item.HOVTYPE;
-                    row["HOVLNQTY"] = item.HOVLNQTY;
-                    row["TOLLID"] = item.TOLLID;
+                    row["HOVTYPE"] = GetStringFromDynamic(item.HOVTYPE);
+                    row["HOVLNQTY"] =  item.HOVLNQTY;
+                    row["TOLLID"] = GetStringFromDynamic(item.TOLLID);
                     row["TOLLTYPE"] = item.TOLLTYPE;
                     row["TOLLCHARGED"] = item.TOLLCHARGED;
 
