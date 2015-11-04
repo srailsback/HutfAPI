@@ -688,7 +688,6 @@ namespace HutfAPI.Infrastructure.Repositories
             using (var sqlConnection = new SqlConnection(ConfigurationManager.ConnectionStrings[SQL_CONNECTION_STRING_NAME].ConnectionString))
             {
                 sqlConnection.Open();
-
                 // do all this work inside a transaction so we can roll it back
                 var sqlTransaction = sqlConnection.BeginTransaction();
 
@@ -760,7 +759,6 @@ namespace HutfAPI.Infrastructure.Repositories
         /// <exception cref="System.InvalidOperationException">Invalid destination table.</exception>
         private void SqlBulkCopyFromOracle(SqlConnection sqlConnection, SqlTransaction sqlTransaction, string destinationTable, string fips = "")
         {
-
             // get the datatable source
             DataTable source;
             if (destinationTable == SQL_CICOOFF)
@@ -794,13 +792,26 @@ namespace HutfAPI.Infrastructure.Repositories
                     sqlBulkCopy.ColumnMappings.Add(col.ColumnName, col.ColumnName);
                 }
 
-                sqlBulkCopy.BulkCopyTimeout = 500;
-                sqlBulkCopy.BatchSize = 5000;
+                sqlBulkCopy.BulkCopyTimeout = int.Parse(ConfigHelper.GetAppSetting("hutfapi.SqlBulkCopyTimeout"));
+                sqlBulkCopy.BatchSize = int.Parse(ConfigHelper.GetAppSetting("hutfapi.SqlBulkCopyBatchSize"));
 
-                _logger.Info("Writing to server");
+                if (destinationTable == "GRDMS_CICOHPMS")
+                {
+
+                    sqlBulkCopy.SqlRowsCopied += sqlRowsCopied;
+                    sqlBulkCopy.NotifyAfter = int.Parse(ConfigHelper.GetAppSetting("hutfapi.SqlBulkCopyNotifyAfter"));
+
+                }
                 sqlBulkCopy.WriteToServer(source);
+                _logger.Info("Writing to server");
             }
         }
+
+        private void sqlRowsCopied(object sender, SqlRowsCopiedEventArgs e)
+        {
+            _logger.Info(string.Format("Copied row {0}", e.RowsCopied));
+        }
+
 
         private string GetStringFromDynamic(dynamic value) {
             if (value == null)
@@ -937,13 +948,15 @@ namespace HutfAPI.Infrastructure.Repositories
                     row["ACCESS_"] = GetStringFromDynamic(item.ACCESS_);
                     row["TRKRESTRICT"] = GetStringFromDynamic(item.TRKRESTRICT);
                     row["PRIIRI"] = item.PRIIRI != null ? int.Parse(item.PRIIRI.ToString()) : 0;
-                    if (DynamicPropertyExists(item, "PRIIRIDATE")) {
-                        row["PRIIRIDATE"] = item.PRIIRIDATE != null ? DateTime.Parse(item.PRIIRIDATE.ToString()) : (DateTime?)null;
-                    }
-                    else
-                    {
-                        row["PRIIRIDATE"] = DBNull.Value;
-                    }
+                    row["PRIIRIDATE"] = item.PRIIRIDATE != null ? DateTime.Parse(item.PRIIRIDATE.ToString()) : DBNull.Value;
+
+                    //if (DynamicPropertyExists(item, "PRIIRIDATE")) {
+                    //    row["PRIIRIDATE"] = item.PRIIRIDATE != null ? DateTime.Parse(item.PRIIRIDATE.ToString()) : (DateTime?)null;
+                    //}
+                    //else
+                    //{
+                    //    row["PRIIRIDATE"] = DBNull.Value;
+                    //}
 
                     row["PRIPSI"] = decimal.Parse(item.PRIPSI.ToString());
                     row["PROJYR"] = GetStringFromDynamic(item.PROJYR);
@@ -1049,6 +1062,7 @@ namespace HutfAPI.Infrastructure.Repositories
             }
         }
 
+
         /// <summary>
         /// CICOHPMS DataTable
         /// </summary>
@@ -1056,6 +1070,10 @@ namespace HutfAPI.Infrastructure.Repositories
         /// <returns></returns>
         private DataTable CICOHPMS(IList<dynamic> data, bool toOracle = false)
         {
+            int dtRow = 0;
+            string propertyName = "";
+            object propertyValue = null;
+
             var dt = new DataTable();
             try
             {
@@ -1116,56 +1134,211 @@ namespace HutfAPI.Infrastructure.Repositories
                 foreach (var item in data)
                 {
                     DataRow row = dt.NewRow();
+                    dtRow = dt.Rows.IndexOf(row);
+
+                    propertyName = "HPMSID";
+                    propertyValue = item.HPMSID;
                     row["HPMSID"] = item.HPMSID;
+
+                    propertyName = "FIPS";
+                    propertyValue = item.FIPS;
                     row["FIPS"] = item.FIPS;
+
+                    propertyName = "ROUTE";
+                    propertyValue = item.ROUTE;
                     row["ROUTE"] = item.ROUTE;
+
+                    propertyName = "SEGMID";
+                    propertyValue = item.SEGMID;
                     row["SEGMID"] = item.SEGMID;
+
+                    propertyName = "LENGTH_";
+                    propertyValue = item.LENGTH_;
                     row["LENGTH_"] = item.LENGTH_;
+
+                    propertyName = "UPDATEYR";
+                    propertyValue = item.UPDATEYR;
                     row["UPDATEYR"] = item.UPDATEYR;
+
+                    propertyName = "FIPSCOUNTY";
+                    propertyValue = item.FIPSCOUNTY;
                     row["FIPSCOUNTY"] = item.FIPSCOUNTY;
+
+                    propertyName = "YRADD";
+                    propertyValue = item.YRADD;
                     row["YRADD"] = item.YRADD != null ? item.YRADD : DBNull.Value;
+
+                    propertyName = "YRINSPECT";
+                    propertyValue = item.YRINSPECT;
                     row["YRINSPECT"] = item.YRINSPECT != null ? item.YRINSPECT : DBNull.Value;
+
+                    propertyName = "PRIRUTTING";
+                    propertyValue = item.PRIRUTTING;
                     row["PRIRUTTING"] = item.PRIRUTTING != null ? item.PRIRUTTING : DBNull.Value;
+
+                    propertyName = "PRIFAULTING";
+                    propertyValue = item.PRIFAULTING;
                     row["PRIFAULTING"] = item.PRIFAULTING != null ? item.PRIFAULTING : DBNull.Value;
+
+                    propertyName = "PRIFATIGUECRACK";
+                    propertyValue = item.PRIFATIGUECRACK;
                     row["PRIFATIGUECRACK"] = item.PRIFATIGUECRACK != null ? item.PRIFATIGUECRACK : DBNull.Value;
+
+                    propertyName = "PRITRANSCRACK";
+                    propertyValue = item.PRITRANSCRACK;
                     row["PRITRANSCRACK"] = item.PRITRANSCRACK != null ? item.PRITRANSCRACK : DBNull.Value;
+
+                    propertyName = "RIGIDTHICK";
+                    propertyValue = item.RIGIDTHICK;
                     row["RIGIDTHICK"] = item.RIGIDTHICK != null ? item.RIGIDTHICK : DBNull.Value;
+
+                    propertyName = "FLEXTHICK";
+                    propertyValue = item.FLEXTHICK;
                     row["FLEXTHICK"] = item.FLEXTHICK != null ? item.FLEXTHICK : DBNull.Value;
+
+                    propertyName = "BASETYPE";
+                    propertyValue = item.BASETYPE;
                     row["BASETYPE"] = item.BASETYPE != null ? item.BASETYPE : DBNull.Value;
+
+                    propertyName = "BASETHICK";
+                    propertyValue = item.BASETHICK;
                     row["BASETHICK"] = item.BASETHICK != null ? item.BASETHICK : DBNull.Value;
+
+                    propertyName = "MEDIAN";
+                    propertyValue = item.MEDIAN;
                     row["MEDIAN"] = item.MEDIAN != null ? item.MEDIAN : DBNull.Value;
+
+                    propertyName = "MEDIANWD";
+                    propertyValue = item.MEDIANWD;
                     row["MEDIANWD"] = item.MEDIANWD != null ? item.MEDIANWD : DBNull.Value;
+
+                    propertyName = "PRIINSHLDWD";
+                    propertyValue = item.PRIINSHLDWD;
                     row["PRIINSHLDWD"] = item.PRIINSHLDWD != null ? item.PRIINSHLDWD : DBNull.Value;
+
+                    propertyName = "PRIOUTSHLD";
+                    propertyValue = item.PRIOUTSHLD;
                     row["PRIOUTSHLD"] = item.PRIOUTSHLD != null ? item.PRIOUTSHLD : DBNull.Value;
+
+                    propertyName = "PRIOUTSHLDWD";
+                    propertyValue = item.PRIOUTSHLDWD;
                     row["PRIOUTSHLDWD"] = item.PRIOUTSHLDWD != null ? item.PRIOUTSHLDWD : DBNull.Value;
+
+                    propertyName = "CURVES_A";
+                    propertyValue = item.CURVES_A;
                     row["CURVES_A"] = item.CURVES_A != null ? item.CURVES_A : DBNull.Value;
+
+                    propertyName = "CURVES_B";
+                    propertyValue = item.CURVES_B;
                     row["CURVES_B"] = item.CURVES_B != null ? item.CURVES_B : DBNull.Value;
+
+                    propertyName = "CURVES_C";
+                    propertyValue = item.CURVES_C;
                     row["CURVES_C"] = item.CURVES_C != null ? item.CURVES_C : DBNull.Value;
-                    row["CURVES_C"] = item.CURVES_D != null ? item.CURVES_D : DBNull.Value;
-                    row["CURVES_C"] = item.CURVES_E != null ? item.CURVES_E : DBNull.Value;
-                    row["CURVES_C"] = item.CURVES_F != null ? item.CURVES_F : DBNull.Value;
+
+                    propertyName = "CURVES_D";
+                    propertyValue = item.CURVES_D;
+                    row["CURVES_D"] = item.CURVES_D != null ? item.CURVES_D : DBNull.Value;
+
+                    propertyName = "CURVES_E";
+                    propertyValue = item.CURVES_E;
+                    row["CURVES_E"] = item.CURVES_E != null ? item.CURVES_E : DBNull.Value;
+
+                    propertyName = "GRADES_A";
+                    propertyValue = item.GRADES_F;
+                    row["CURVES_F"] = item.CURVES_F != null ? item.CURVES_F : DBNull.Value;
+
+                    propertyName = "GRADES_A";
+                    propertyValue = item.GRADES_A;
                     row["GRADES_A"] = item.GRADES_A != null ? item.GRADES_A : DBNull.Value;
-                    row["GRADES_A"] = item.GRADES_B != null ? item.GRADES_B : DBNull.Value;
-                    row["GRADES_A"] = item.GRADES_C != null ? item.GRADES_C : DBNull.Value;
-                    row["GRADES_A"] = item.GRADES_D != null ? item.GRADES_D : DBNull.Value;
-                    row["GRADES_A"] = item.GRADES_E != null ? item.GRADES_E : DBNull.Value;
-                    row["GRADES_A"] = item.GRADES_F != null ? item.GRADES_F : DBNull.Value;
+
+                    propertyName = "GRADES_B";
+                    propertyValue = item.GRADES_B;
+                    row["GRADES_B"] = item.GRADES_B != null ? item.GRADES_B : DBNull.Value;
+
+                    propertyName = "GRADES_C";
+                    propertyValue = item.GRADES_C;
+                    row["GRADES_C"] = item.GRADES_C != null ? item.GRADES_C : DBNull.Value;
+
+                    propertyName = "GRADES_D";
+                    propertyValue = item.GRADES_D;
+                    row["GRADES_D"] = item.GRADES_D != null ? item.GRADES_D : DBNull.Value;
+
+                    propertyName = "GRADES_E";
+                    propertyValue = item.GRADES_E;
+                    row["GRADES_E"] = item.GRADES_E != null ? item.GRADES_E : DBNull.Value;
+
+                    propertyName = "GRADES_F";
+                    propertyValue = item.GRADES_F;
+                    row["GRADES_F"] = item.GRADES_F != null ? item.GRADES_F : DBNull.Value;
+
+                    propertyName = "PKPARK";
+                    propertyValue = item.PKPARK;
                     row["PKPARK"] = item.PKPARK != null ? item.PKPARK : DBNull.Value;
+
+                    propertyName = "WIDENOBSTACLE";
+                    propertyValue = item.WIDENOBSTACLE;
                     row["WIDENOBSTACLE"] = item.WIDENOBSTACLE != null ? item.WIDENOBSTACLE : DBNull.Value;
+
+                    propertyName = "WIDENFEAS";
+                    propertyValue = item.WIDENFEAS;
                     row["WIDENFEAS"] = item.WIDENFEAS != null ? item.WIDENFEAS : DBNull.Value;
+
+                    propertyName = "SIGHTDIST";
+                    propertyValue = item.SIGHTDIST;
                     row["SIGHTDIST"] = item.SIGHTDIST != null ? item.SIGHTDIST : DBNull.Value;
+
+                    propertyName = "SPEEDLIM";
+                    propertyValue = item.SPEEDLIM;
                     row["SPEEDLIM"] = item.SPEEDLIM != null ? item.SPEEDLIM : DBNull.Value;
-                    row["INTERSECTION"] = item.INTERSECTION != null ? item.INTERSECTION : DBNull.Value;
+
+                    propertyName = "INTERSECTION";
+                    propertyValue = item.INTERSECTION;
+                    //row["INTERSECTION"] = item.INTERSECTION != null ? item.INTERSECTION : DBNull.Value;
+                    row["INTERSECTION"] = item.INTERSECTION != null ? item.INTERSECTION :"";
+
+                    propertyName = "LTTURNLN";
+                    propertyValue = item.LTTURNLN;
                     row["LTTURNLN"] = item.LTTURNLN != null ? item.LTTURNLN : DBNull.Value;
+
+                    propertyName = "RTTURNLN";
+                    propertyValue = item.RTTURNLN;
                     row["RTTURNLN"] = item.RTTURNLN != null ? item.RTTURNLN : DBNull.Value;
+
+                    propertyName = "SIGNALTYPE";
+                    propertyValue = item.SIGNALTYPE;
                     row["SIGNALTYPE"] = item.SIGNALTYPE != null ? item.SIGNALTYPE : DBNull.Value;
+
+                    propertyName = "GREENTIME";
+                    propertyValue = item.GREENTIME;
                     row["GREENTIME"] = item.GREENTIME != null ? item.GREENTIME : DBNull.Value;
+
+                    propertyName = "SIGNALQTY";
+                    propertyValue = item.SIGNALQTY;
                     row["SIGNALQTY"] = item.SIGNALQTY != null ? item.SIGNALQTY : DBNull.Value;
+
+                    propertyName = "STOPQTY";
+                    propertyValue = item.STOPQTY;
                     row["STOPQTY"] = item.STOPQTY != null ? item.STOPQTY : DBNull.Value;
+
+                    propertyName = "NONCTRLQTY";
+                    propertyValue = item.NONCTRLQTY;
                     row["NONCTRLQTY"] = item.NONCTRLQTY != null ? item.NONCTRLQTY : DBNull.Value;
+
+                    propertyName = "ROADTERRAIN";
+                    propertyValue = item.ROADTERRAIN;
                     row["ROADTERRAIN"] = item.ROADTERRAIN != null ? item.ROADTERRAIN : DBNull.Value;
+
+                    propertyName = "COMMENTS";
+                    propertyValue = item.COMMENTS;
                     row["COMMENTS"] = item.COMMENTS;
+
+                    propertyName = "PRISLABCRACK";
+                    propertyValue = item.PRISLABCRACK;
                     row["PRISLABCRACK"] = item.PRISLABCRACK != null ? item.PRISLABCRACK : DBNull.Value;
+
+                    propertyName = "MEDIANSF";
+                    propertyValue = item.MEDIANSF;
                     row["MEDIANSF"] = item.MEDIANSF != null ? item.MEDIANSF : DBNull.Value;
 
                     dt.Rows.Add(row);
@@ -1174,11 +1347,10 @@ namespace HutfAPI.Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                _logger.ErrorException(ex.Message, ex);
+                _logger.ErrorException(string.Format("HPMS Error, Row => {0}, Property => {1}, Value => {2}, Message => {3}", dtRow, propertyName, propertyValue, ex.Message), ex);
                 return dt;
             }
         }
-
         #endregion
 
 
@@ -1367,6 +1539,12 @@ namespace HutfAPI.Infrastructure.Repositories
         {
             public ORCL_CICOHOVT_TABLE() : base("ORCLConnectionString", ConfigHelper.GetAppSetting("ORCL_CICOHIOVT_TABLE")) { }
         }
+
+
+
+
+
+
     }
 
 }

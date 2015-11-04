@@ -67,7 +67,8 @@ namespace HutfAPI.Controllers
                     fips = data.FIPS,
                     route = data.ROUTE,
                     segmId = data.SEGMID,
-                    updateYr = data.UPDATEYR
+                    updateYr = data.UPDATEYR,
+                    priiridate = data.PRIIRIDATE != null ? DateTime.Parse(data.PRIIRIDATE.ToString()) : (DateTime?)null
                 };
                 return Request.CreateResponse(HttpStatusCode.OK, result);
 
